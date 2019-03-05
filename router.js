@@ -1,6 +1,22 @@
+const Koa = require('koa')
 const Router = require('koa-router')
+const jwt = require('jsonwebtoken')
+const bodyParser = require('koa-bodyparser')
+const jwtKoa = require('koa-jwt')
+const secert = 'my_token'
+const util = require('util')
+const verify = util.promisify(jwt.verify)
 const router = new Router()
 const db = require('./mysql.js')
+const app = new Koa()
+app.use(bodyParser)
+
+app
+  .use(jwtKoa({
+    secert
+  }).unless({
+    path: [/^\/login/, /^\/reg/] //数组中的路径不需要通过jwt验证
+  }))
 
 const query = function (sql, arg) {
   return new Promise((resolve, reject) => {
@@ -11,11 +27,11 @@ const query = function (sql, arg) {
 }
 
 router
-  .all('*', async(ctx, next) => {
+  .all('*', async (ctx, next) => {
     ctx.set("Access-Control-Allow-Origin", "http://localhost:8080")
     ctx.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
     ctx.set("Access-Control-Allow-Credentials", "true")
-    ctx.set("Access-Control-Allow-Headers", "Origin, No-Cache, X-Requested-With, If-Modified-Since, Pragma, Last-Modified, Cache-Control, Expires, Content-Type, X-E4M-With")
+    ctx.set("Access-Control-Allow-Headers", "*")
     ctx.set("Content-Type", "text/html; charset=utf-8")
     await next()
   })
@@ -23,19 +39,26 @@ router
     const email = ctx.query.userName
     const pwd = ctx.query.password
     const data = await query(`SELECT * FROM hc_user where userName = '${email}'`)
-    if(data.length > 0) {
-      if(pwd == data[0].passWord) {
+    if (data.length > 0) {
+      if (pwd == data[0].passWord) {
+        const token = jwt.sign({
+          name: email,
+          _id: data[0].id
+        }, 'my_token', {
+          expiresIn: '2h'
+        });
         ctx.body = {
           msg: "登录成功",
-          code: 100
+          code: 100,
+          data: token
         }
-      }else {
+      } else {
         ctx.body = {
           msg: "用户名或密码错误",
           code: 101
         }
       }
-    }else {
+    } else {
       ctx.body = {
         msg: "用户名或密码错误",
         code: 101
@@ -45,26 +68,41 @@ router
   .get('/reg', async (ctx) => {
     const email = ctx.query.userName
     const pwd = ctx.query.password
-    if(email && pwd) {
+    if (email && pwd) {
       const exit = await query(`SELECT * FROM hc_user where userName = '${email}'`, '')
-      if(exit.length === 0) {
+      if (exit.length === 0) {
         const data = await query(`INSERT INTO hc_user (userName, passWord) VALUES ('${email}', '${pwd}');`, '')
-        if(data.affectedRows > 0) {
+        if (data.affectedRows > 0) {
           ctx.body = {
             msg: "注册成功",
             code: 100
           }
-        }else {
+        } else {
           ctx.body = {
             msg: "注册失败",
             code: 102
           }
         }
-      }else {
+      } else {
         ctx.body = {
           msg: "用户名已存在！",
           code: 101
         }
+      }
+    }
+  })
+  .get('/api/userInfo', async (ctx) => {
+    const token = ctx.header.token // 获取jwt
+    let payload
+    if (token) {
+      payload = await verify(token, secert)
+      ctx.body = {
+        data: payload
+      }
+    } else {
+      ctx.body = {
+        message: 'token 错误',
+        code: -1
       }
     }
   })
