@@ -4,7 +4,7 @@ const db = require('./mysql.js')
 
 const query = function (sql, arg) {
   return new Promise((resolve, reject) => {
-    db.query(sql, arg, function (results, resulfieldsts) {
+    db.query(sql, arg, function (results) {
       resolve(results)
     });
   })
@@ -19,16 +19,53 @@ router
     ctx.set("Content-Type", "text/html; charset=utf-8")
     await next()
   })
-  .get('/list', async (ctx) => {
-    db.query('SELECT * FROM NewTable', '', function (results) {
-      ctx.body = 'results';
-    })
+  .get('/login', async (ctx) => {
+    const email = ctx.query.userName
+    const pwd = ctx.query.password
+    const data = await query(`SELECT * FROM hc_user where userName = '${email}'`)
+    if(data.length > 0) {
+      if(pwd == data[0].passWord) {
+        ctx.body = {
+          msg: "登录成功",
+          code: 100
+        }
+      }else {
+        ctx.body = {
+          msg: "用户名或密码错误",
+          code: 101
+        }
+      }
+    }else {
+      ctx.body = {
+        msg: "用户名或密码错误",
+        code: 101
+      }
+    }
   })
-  .get('/detail', async (ctx) => {
-    const data = await query('select * from NewTable', '')
-    console.log(data) // 查询到数据
-    ctx.body = {
-      data: data
+  .get('/reg', async (ctx) => {
+    const email = ctx.query.userName
+    const pwd = ctx.query.password
+    if(email && pwd) {
+      const exit = await query(`SELECT * FROM hc_user where userName = '${email}'`, '')
+      if(exit.length === 0) {
+        const data = await query(`INSERT INTO hc_user (userName, passWord) VALUES ('${email}', '${pwd}');`, '')
+        if(data.affectedRows > 0) {
+          ctx.body = {
+            msg: "注册成功",
+            code: 100
+          }
+        }else {
+          ctx.body = {
+            msg: "注册失败",
+            code: 102
+          }
+        }
+      }else {
+        ctx.body = {
+          msg: "用户名已存在！",
+          code: 101
+        }
+      }
     }
   })
 
