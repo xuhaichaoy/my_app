@@ -42,8 +42,13 @@ router
     if (data.length > 0) {
       if (pwd == data[0].passWord) {
         const token = jwt.sign({
-          name: email,
-          _id: data[0].id
+          userName: email,
+          id: data[0].id,
+          nickName: data[0].nickName,
+          image: data[0].image,
+          introduction: data[0].introduction,
+          github: data[0].github,
+          wechat: data[0].wechat
         }, 'my_token', {
           expiresIn: '2h'
         });
