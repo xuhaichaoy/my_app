@@ -39,6 +39,7 @@ router
     const email = ctx.query.userName
     const pwd = ctx.query.password
     const data = await query(`SELECT * FROM hc_user where userName = '${email}'`)
+    console.log(data)
     if (data.length > 0) {
       if (pwd == data[0].passWord) {
         const token = jwt.sign({
@@ -109,6 +110,16 @@ router
         message: 'token 错误',
         code: -1
       }
+    }
+  })
+  .get('/api/getArtical', async (ctx) => {
+    const limit = ctx.query.limit
+    const page = (ctx.query.page - 1) * limit
+    const data = await query(`SELECT * FROM hc_artical o limit ${page}, ${limit}`)
+    ctx.body = {
+      msg: "succ",
+      code: 100,
+      data: data
     }
   })
 
