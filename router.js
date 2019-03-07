@@ -117,8 +117,6 @@ router
     const page = (ctx.query.page - 1) * limit
     const data = await query(`SELECT * FROM hc_artical o limit ${page}, ${limit}`)
     const all = await query(`SELECT * FROM hc_artical`)
-    console.log(all)
-    console.log(data)
     ctx.body = {
       msg: "succ",
       code: 100,
@@ -134,6 +132,16 @@ router
       code: 100,
       data: detail[0]
     }
-  } )
+  })
+  .get('/api/searchValue', async (ctx) => {
+    const title = ctx.query.title
+    const str = ''.concat("%", title, "%")
+    const data = await query(`SELECT * FROM hc_artical where title like "${str}"`)
+    ctx.body = {
+      msg: "succ",
+      code: 100,
+      data: data
+    }
+  })
 
 module.exports = router
