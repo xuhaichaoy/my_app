@@ -116,11 +116,24 @@ router
     const limit = ctx.query.limit
     const page = (ctx.query.page - 1) * limit
     const data = await query(`SELECT * FROM hc_artical o limit ${page}, ${limit}`)
+    const all = await query(`SELECT * FROM hc_artical`)
+    console.log(all)
+    console.log(data)
     ctx.body = {
       msg: "succ",
       code: 100,
+      count: all.length,
       data: data
     }
   })
+  .get('/api/getDetail', async (ctx) => {
+    const artical_id = ctx.query.id
+    const detail = await query(`SELECT * FROM hc_artical where id = ${artical_id}`)
+    ctx.body = {
+      msg: "succ",
+      code: 100,
+      data: detail[0]
+    }
+  } )
 
 module.exports = router
