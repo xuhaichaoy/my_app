@@ -101,10 +101,18 @@ router
     const token = ctx.header.token // 获取jwt
     let payload
     if (token) {
-      payload = await verify(token, secert)
-      ctx.body = {
-        data: payload
+      try {
+        payload = await verify(token, secert)
+        ctx.body = {
+          data: payload
+        }
+      } catch (error) {
+        ctx.body = {
+          message: error.message,
+          code: -1
+        }
       }
+      
     } else {
       ctx.body = {
         message: 'token 错误',
@@ -141,6 +149,22 @@ router
       msg: "succ",
       code: 100,
       data: data
+    }
+  })
+  .get('/api/getlist', async (ctx) => {
+    const id = ctx.query.id
+    const data = await query(`SELECT * FROM hc_artical where article_id = "${id}"`)
+    ctx.body = {
+      msg: "succ",
+      code: 100,
+      data: data
+    }
+  })
+  .post('/api/publish', async (ctx) => {
+    console.log("ctx.request", ctx.request)
+    console.log("ctx.request.body", ctx.request.body)
+    ctx.body = {
+      data: 1111
     }
   })
 
