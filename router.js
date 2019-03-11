@@ -1,22 +1,10 @@
-const Koa = require('koa')
 const Router = require('koa-router')
 const jwt = require('jsonwebtoken')
-const bodyParser = require('koa-bodyparser')
-const jwtKoa = require('koa-jwt')
-const secert = 'my_token'
 const util = require('util')
+const secert = 'my_token'
 const verify = util.promisify(jwt.verify)
 const router = new Router()
 const db = require('./mysql.js')
-const app = new Koa()
-app.use(bodyParser)
-
-app
-  .use(jwtKoa({
-    secert
-  }).unless({
-    path: [/^\/login/, /^\/reg/] //数组中的路径不需要通过jwt验证
-  }))
 
 const query = function (sql, arg) {
   return new Promise((resolve, reject) => {
@@ -24,41 +12,6 @@ const query = function (sql, arg) {
       resolve(results)
     });
   })
-}
-
-function parsePostData(ctx) {
-  // 利用ES6的语法new一个Promise对象，其中传递两个值，resolve是成功的，而reject是失败的
-  return new Promise((resolve, reject) => {
-    try {
-      // 对获取到的值进行处理
-      let postdata = "";
-      ctx.req.on('data', (data) => {
-        postdata += data
-      })
-      ctx.req.addListener("end", function () {
-        // 把我们在全局定义的postdata传递给parseQueryStr，进行格式的转化
-        let parseData = parseQueryStr(postdata)
-        // 把成功后的parseData传出去
-        resolve(parseData);
-      })
-    } catch (error) {
-      // 把错误的信息返回出去
-      reject(error);
-    }
-  });
-}
-
-/*POST字符串解析JSON对象*/
-function parseQueryStr(queryStr) {
-  let queryData = {};
-  let queryStrList = queryStr.split('&');
-  // 利用了ES6提供的forOf，可以找找相关的看看
-  for (let [index, queryStr] of queryStrList.entries()) {
-    // 进行切割
-    let itemList = queryStr.split('=');
-    queryData[itemList[0]] = decodeURIComponent(itemList[1]);
-  }
-  return queryData
 }
 
 router
@@ -71,9 +24,8 @@ router
     await next()
   })
   .post('/login', async (ctx) => {
-    let pastData = await parsePostData(ctx)
-    const email = pastData.userName
-    const pwd = pastData.password
+    const email = ctx.request.body.userName
+    const pwd = ctx.request.body.password
     const data = await query(`SELECT * FROM hc_user where userName = '${email}'`)
     if (data.length > 0) {
       if (pwd == data[0].passWord) {
@@ -107,9 +59,8 @@ router
     }
   })
   .post('/reg', async (ctx) => {
-    let pastData = await parsePostData(ctx)
-    const email = pastData.userName
-    const pwd = pastData.password
+    const email = ctx.request.body.userName
+    const pwd = ctx.request.body.password
     if (email && pwd) {
       const exit = await query(`SELECT * FROM hc_user where userName = '${email}'`, '')
       if (exit.length === 0) {
@@ -197,8 +148,13 @@ router
     }
   })
   .post('/api/publish', async (ctx) => {
-    let pastData = await parsePostData(ctx)
-    const data = await query(`INSERT INTO hc_artical (title, postDate, tips, category, content, article_id) VALUES ('${pastData.title}', '${pastData.postDate}', '${pastData.tips}', '${pastData.category}', '${pastData.val}', '${pastData.artical_id}');`, '')
+    const title = ctx.request.body.title
+    const postDate = ctx.request.body.postDate
+    const tips = ctx.request.body.tips
+    const category = ctx.request.body.category
+    const val = ctx.request.body.val
+    const artical_id = ctx.request.body.artical_id
+    const data = await query(`INSERT INTO hc_artical (title, postDate, tips, category, content, article_id) VALUES ('${title}', '${postDate}', '${tips}', '${category}', '${val}', '${artical_id}');`, '')
     if(data.affectedRows > 0) {
       ctx.body = {
         data: {
@@ -215,6 +171,37 @@ router
       }
     }
     
+  })
+  .get('/api/getComment', async (ctx) => {
+    const data = await query(`SELECT * FROM hc_comment`)
+    ctx.body = {
+      msg: "succ",
+      code: 100,
+      data: data
+    }
+  })
+  .post('/api/comment', async (ctx) => {
+    const comment = ctx.request.body.comment
+    const artical_id = ctx.request.body.artical_id
+    const image = ctx.request.body.image
+    const author = ctx.request.body.author
+    const date = ctx.request.body.date
+    const data = await query(`INSERT INTO hc_comment (comment, artical_id, image, author, date) VALUES ('${comment}', '${artical_id}', '${image}', '${author}', '${date}');`, '')
+    if(data.affectedRows > 0) {
+      ctx.body = {
+        data: {
+          msg: "成功",
+          code: 100
+        }
+      }
+    }else {
+      ctx.body = {
+        data: {
+          msg: "失败",
+          code: 101
+        }
+      }
+    }
   })
 
 module.exports = router
