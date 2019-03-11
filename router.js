@@ -26,6 +26,41 @@ const query = function (sql, arg) {
   })
 }
 
+function parsePostData(ctx) {
+  // 利用ES6的语法new一个Promise对象，其中传递两个值，resolve是成功的，而reject是失败的
+  return new Promise((resolve, reject) => {
+    try {
+      // 对获取到的值进行处理
+      let postdata = "";
+      ctx.req.on('data', (data) => {
+        postdata += data
+      })
+      ctx.req.addListener("end", function () {
+        // 把我们在全局定义的postdata传递给parseQueryStr，进行格式的转化
+        let parseData = parseQueryStr(postdata)
+        // 把成功后的parseData传出去
+        resolve(parseData);
+      })
+    } catch (error) {
+      // 把错误的信息返回出去
+      reject(error);
+    }
+  });
+}
+
+/*POST字符串解析JSON对象*/
+function parseQueryStr(queryStr) {
+  let queryData = {};
+  let queryStrList = queryStr.split('&');
+  // 利用了ES6提供的forOf，可以找找相关的看看
+  for (let [index, queryStr] of queryStrList.entries()) {
+    // 进行切割
+    let itemList = queryStr.split('=');
+    queryData[itemList[0]] = decodeURIComponent(itemList[1]);
+  }
+  return queryData
+}
+
 router
   .all('*', async (ctx, next) => {
     ctx.set("Access-Control-Allow-Origin", "http://localhost:8080")
@@ -35,11 +70,11 @@ router
     ctx.set("Content-Type", "text/html; charset=utf-8")
     await next()
   })
-  .get('/login', async (ctx) => {
-    const email = ctx.query.userName
-    const pwd = ctx.query.password
+  .post('/login', async (ctx) => {
+    let pastData = await parsePostData(ctx)
+    const email = pastData.userName
+    const pwd = pastData.password
     const data = await query(`SELECT * FROM hc_user where userName = '${email}'`)
-    console.log(data)
     if (data.length > 0) {
       if (pwd == data[0].passWord) {
         const token = jwt.sign({
@@ -71,9 +106,10 @@ router
       }
     }
   })
-  .get('/reg', async (ctx) => {
-    const email = ctx.query.userName
-    const pwd = ctx.query.password
+  .post('/reg', async (ctx) => {
+    let pastData = await parsePostData(ctx)
+    const email = pastData.userName
+    const pwd = pastData.password
     if (email && pwd) {
       const exit = await query(`SELECT * FROM hc_user where userName = '${email}'`, '')
       if (exit.length === 0) {
@@ -112,7 +148,7 @@ router
           code: -1
         }
       }
-      
+
     } else {
       ctx.body = {
         message: 'token 错误',
@@ -123,7 +159,7 @@ router
   .get('/api/getArtical', async (ctx) => {
     const limit = ctx.query.limit
     const page = (ctx.query.page - 1) * limit
-    const data = await query(`SELECT * FROM hc_artical o limit ${page}, ${limit}`)
+    const data = await query(`SELECT * FROM hc_artical o order by postDate desc limit ${page} , ${limit}`)
     const all = await query(`SELECT * FROM hc_artical`)
     ctx.body = {
       msg: "succ",
@@ -153,7 +189,7 @@ router
   })
   .get('/api/getlist', async (ctx) => {
     const id = ctx.query.id
-    const data = await query(`SELECT * FROM hc_artical where article_id = "${id}"`)
+    const data = await query(`SELECT * FROM hc_artical where article_id = "${id}" order by postDate desc limit 6`)
     ctx.body = {
       msg: "succ",
       code: 100,
@@ -161,11 +197,24 @@ router
     }
   })
   .post('/api/publish', async (ctx) => {
-    console.log("ctx.request", ctx.request)
-    console.log("ctx.request.body", ctx.request.body)
-    ctx.body = {
-      data: 1111
+    let pastData = await parsePostData(ctx)
+    const data = await query(`INSERT INTO hc_artical (title, postDate, tips, category, content, article_id) VALUES ('${pastData.title}', '${pastData.postDate}', '${pastData.tips}', '${pastData.category}', '${pastData.val}', '${pastData.artical_id}');`, '')
+    if(data.affectedRows > 0) {
+      ctx.body = {
+        data: {
+          msg: "成功",
+          code: 100
+        }
+      }
+    }else {
+      ctx.body = {
+        data: {
+          msg: "失败",
+          code: 101
+        }
+      }
     }
+    
   })
 
 module.exports = router
