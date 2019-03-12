@@ -16,7 +16,7 @@ const query = function (sql, arg) {
 
 router
   .all('*', async (ctx, next) => {
-    ctx.set("Access-Control-Allow-Origin", "http://localhost:8080")
+    ctx.set("Access-Control-Allow-Origin", "*")
     ctx.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
     ctx.set("Access-Control-Allow-Credentials", "true")
     ctx.set("Access-Control-Allow-Headers", "*")
