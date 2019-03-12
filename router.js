@@ -173,7 +173,7 @@ router
     
   })
   .get('/api/getComment', async (ctx) => {
-    const data = await query(`SELECT * FROM hc_comment`)
+    const data = await query(`SELECT * FROM hc_comment order by id desc`)
     ctx.body = {
       msg: "succ",
       code: 100,
@@ -201,6 +201,23 @@ router
           code: 101
         }
       }
+    }
+  })
+  .get('/api/getCategory', async (ctx) => {
+    const data = await query(`SELECT * FROM hc_category`)
+    ctx.body = {
+      msg: "succ",
+      code: 100,
+      data: data
+    }
+  })
+  .get('/api/getCvalue', async (ctx) => {
+    const category = ctx.query.category
+    const data = await query(`SELECT * FROM hc_artical where category = "${category}"`)
+    ctx.body = {
+      msg: "succ",
+      code: 100,
+      data: data
     }
   })
 
