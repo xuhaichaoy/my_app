@@ -38,7 +38,7 @@ router
           github: data[0].github,
           wechat: data[0].wechat
         }, 'my_token', {
-          expiresIn: '2h'
+          expiresIn: '24h'
         });
         ctx.body = {
           msg: "登录成功",
@@ -110,7 +110,7 @@ router
   .get('/api/getArtical', async (ctx) => {
     const limit = ctx.query.limit
     const page = (ctx.query.page - 1) * limit
-    const data = await query(`SELECT * FROM hc_artical o order by postDate desc limit ${page} , ${limit}`)
+    const data = await query(`SELECT * FROM hc_artical o order by id desc limit ${page} , ${limit}`)
     const all = await query(`SELECT * FROM hc_artical`)
     ctx.body = {
       msg: "succ",
@@ -140,7 +140,7 @@ router
   })
   .get('/api/getlist', async (ctx) => {
     const id = ctx.query.id
-    const data = await query(`SELECT * FROM hc_artical where article_id = "${id}" order by postDate desc limit 6`)
+    const data = await query(`SELECT * FROM hc_artical where article_id = "${id}" order by id desc limit 6`)
     ctx.body = {
       msg: "succ",
       code: 100,
@@ -152,7 +152,7 @@ router
     const postDate = ctx.request.body.postDate
     const tips = ctx.request.body.tips
     const category = ctx.request.body.category
-    const val = ctx.request.body.val
+    const val = ctx.request.body.val.replace(/(\')/g, "\\'")
     const artical_id = ctx.request.body.artical_id
     const data = await query(`INSERT INTO hc_artical (title, postDate, tips, category, content, article_id) VALUES ('${title}', '${postDate}', '${tips}', '${category}', '${val}', '${artical_id}');`, '')
     if(data.affectedRows > 0) {
@@ -186,6 +186,16 @@ router
     const image = ctx.request.body.image
     const author = ctx.request.body.author
     const date = ctx.request.body.date
+    if(!(comment && artical_id && image && author && date)) {
+      ctx.body = {
+        data: {
+          msg: "请先登录",
+          code: 102
+        }
+      }
+      return
+    }
+    console.log(comment, 198)
     const data = await query(`INSERT INTO hc_comment (comment, artical_id, image, author, date) VALUES ('${comment}', '${artical_id}', '${image}', '${author}', '${date}');`, '')
     if(data.affectedRows > 0) {
       ctx.body = {
