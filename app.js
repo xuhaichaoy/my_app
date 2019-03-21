@@ -12,8 +12,8 @@ app
   }).unless({
     path: [/^\/login/, /^\/reg/, /^\/api/] //数组中的路径不需要通过jwt验证
   }))
-app.use(router.routes());
-app.use(router.allowedMethods());
+app.use(router.routes())
+app.use(router.allowedMethods())
 
 app.listen(3000)
 console.log("启动")

@@ -186,7 +186,7 @@ router
     const image = ctx.request.body.image
     const author = ctx.request.body.author
     const date = ctx.request.body.date
-    if(!(comment && artical_id && image && author && date)) {
+    if(!(comment && artical_id && date)) {
       ctx.body = {
         data: {
           msg: "请先登录",
@@ -195,7 +195,6 @@ router
       }
       return
     }
-    console.log(comment, 198)
     const data = await query(`INSERT INTO hc_comment (comment, artical_id, image, author, date) VALUES ('${comment}', '${artical_id}', '${image}', '${author}', '${date}');`, '')
     if(data.affectedRows > 0) {
       ctx.body = {
