@@ -10,7 +10,7 @@ app
   .use(jwtKoa({
     secert
   }).unless({
-    path: [/^\/login/, /^\/reg/, /^\/api/] //数组中的路径不需要通过jwt验证
+    path: [/^\/login/, /^\/reg/, /^\/api/, /^\/logout/] //数组中的路径不需要通过jwt验证
   }))
 app.use(router.routes())
 app.use(router.allowedMethods())

@@ -23,5 +23,8 @@ module.exports = {
         });
       });
     });
+  },
+  connectd: function() {
+    return mysql
   }
 };
