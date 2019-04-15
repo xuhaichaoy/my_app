@@ -32,12 +32,12 @@ var formatDateTime = function (date) {
 
 router
   .all('*', async (ctx, next) => {
-    ctx.set("Access-Control-Allow-Origin", "http://localhost:8080")
+    ctx.set("Access-Control-Allow-Origin", "http://haichao.mobi:8080")
     ctx.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
     ctx.set("Access-Control-Allow-Credentials", "true")
     ctx.set("Access-Control-Allow-Headers", "X-Requested-With, token")
     ctx.set("Content-Type", "text/html; charset=utf-8")
-    if (ctx.request.header.referer.indexOf('http://localhost:8080') !== 0) {
+    if (ctx.request.header.referer.indexOf('http://haichao.mobi:8080') !== 0) {
       ctx.cookies.set('my_tk', '', {
         signed: false,
         maxAge: 0
@@ -52,7 +52,7 @@ router
       try {
         payload = await verify(ctx.cookies.get('my_tk'), secert)
         ctx.cookies.set('my_tk', ctx.cookies.get('my_tk'), {
-          domain: 'localhost',
+          domain: 'haichao.mobi',
           path: '/', //cookie写入的路径
           maxAge: 1000 * 60 * 60 * 1,
           // expires:new Date('2019-07-06'),
@@ -82,7 +82,7 @@ router
           expiresIn: '24h'
         });
         ctx.cookies.set('my_tk', token, {
-          domain: 'localhost',
+          domain: 'haichao.mobi',
           path: '/', //cookie写入的路径
           maxAge: 1000 * 60 * 60 * 1,
           // expires:new Date('2019-07-06'),
@@ -297,7 +297,7 @@ router
     }
   })
   .get('/api/getlist', async (ctx) => {
-    const data = await query(`SELECT aid, artical_title FROM tb_artical where createuser_id = 1 order by createDate desc limit 6`)
+    const data = await query(`SELECT aid, artical_title FROM tb_artical where createuser_id = 1 order by createDate desc limit 8`)
 
     ctx.body = {
       msg: "succ",
@@ -471,7 +471,7 @@ router
               expiresIn: '24h'
             });
             ctx.cookies.set('my_tk', token, {
-              domain: 'localhost',
+              domain: 'haichao.mobi',
               path: '/', //cookie写入的路径
               maxAge: 1000 * 60 * 60 * 1,
               // expires:new Date('2019-07-06'),

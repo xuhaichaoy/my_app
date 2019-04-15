@@ -16,4 +16,4 @@ app.use(router.routes())
 app.use(router.allowedMethods())
 
 app.listen(3000)
-console.log("启动")
+console.log("启动成功！！！")
