@@ -32,12 +32,12 @@ var formatDateTime = function (date) {
 
 router
   .all('*', async (ctx, next) => {
-    ctx.set("Access-Control-Allow-Origin", "http://haichao.mobi:8080")
+    ctx.set("Access-Control-Allow-Origin", "http://haichao.mobi")
     ctx.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
     ctx.set("Access-Control-Allow-Credentials", "true")
     ctx.set("Access-Control-Allow-Headers", "X-Requested-With, token")
     ctx.set("Content-Type", "text/html; charset=utf-8")
-    if (ctx.request.header.referer.indexOf('http://haichao.mobi:8080') !== 0) {
+    if (ctx.request.header.referer.indexOf('http://haichao.mobi') !== 0) {
       ctx.cookies.set('my_tk', '', {
         signed: false,
         maxAge: 0
@@ -72,6 +72,7 @@ router
     if (data.length > 0) {
       if (pwd == data[0].passWord) {
         const token = jwt.sign({
+          admin: data[0].admin,
           userName: email,
           uid: data[0].uid,
           nickName: data[0].nickName,
@@ -153,6 +154,7 @@ router
           nickName: payload.nickName,
           github: payload.github,
           wechat: payload.wechat,
+          admin: payload.admin
         }
         ctx.body = {
           data: resData
@@ -310,6 +312,16 @@ router
     if (token) {
       try {
         let payload = await verify(token, secert)
+        const admin = payload.admin
+        if(!admin) {
+          ctx.body = {
+            data: {
+              msg: "没有发布权限",
+              code: 101
+            }
+          }
+          return
+        }
         const artical_id = mysql.escape(payload.uid)
         const title = mysql.escape(ctx.request.body.title)
         const postDate = mysql.escape(formatDateTime(new Date()))
